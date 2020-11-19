@@ -1,6 +1,5 @@
 package net.mamoe.mirai.console.plugins.chat.command
 
-import net.mamoe.mirai.alsoLogin
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.plugin.PluginManager.INSTANCE.enable
 import net.mamoe.mirai.console.plugin.PluginManager.INSTANCE.load
@@ -11,10 +10,6 @@ suspend fun main() {
 
     PluginMain.load()
     PluginMain.enable()
-
-    val bot = MiraiConsole.addBot(123456, "") {
-        fileBasedDeviceInfo()
-    }.alsoLogin()
 
     MiraiConsole.job.join()
 }

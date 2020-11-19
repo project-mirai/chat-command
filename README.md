@@ -1,2 +1,2 @@
-# mirai-console-plugin-template
-Template for Mirai Console plugins
+# char-command
+允许在聊天环境执行指令.

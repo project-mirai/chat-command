@@ -79,3 +79,35 @@ object PluginMain : KotlinPlugin(
 
     internal lateinit var commandListener: Listener<MessageEvent>
 }
+
+/*
+
+    @ConsoleExperimentalApi("This is unstable and might get changed")
+    override suspend fun catchExecutionException(e: Throwable) {
+        if (this is CommandSenderOnMessage<*>) {
+            val cause = e.rootCauseOrSelf
+
+            //      CommandArgumentParserException 作为 IllegalCommandArgumentException 不会再进入此函数
+            //      已在
+            //       - [console]  CommandManagerImpl.commandListener
+            //       - [terminal] ConsoleThread.kt
+            //      处理
+
+            val message = cause
+                .takeIf { it is CommandArgumentParserException }?.message
+                ?: "${cause::class.simpleName.orEmpty()}: ${cause.message}"
+
+
+            sendMessage(message) // \n\n60 秒内发送 stacktrace 查看堆栈信息
+            this@AbstractCommandSender.launch(CoroutineName("stacktrace delayer from command")) {
+                if (fromEvent.nextMessageOrNull(60_000) {
+                        it.message.contentEquals("stacktrace") || it.message.contentEquals("stack")
+                    } != null) {
+                    sendMessage(e.stackTraceToString())
+                }
+            }
+        } else {
+            sendMessage(e.stackTraceToString())
+        }
+    }
+ */
