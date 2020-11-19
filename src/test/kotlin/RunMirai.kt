@@ -1,4 +1,4 @@
-package org.example.mirai.plugin
+package net.mamoe.mirai.console.plugins.chat.command
 
 import net.mamoe.mirai.alsoLogin
 import net.mamoe.mirai.console.MiraiConsole

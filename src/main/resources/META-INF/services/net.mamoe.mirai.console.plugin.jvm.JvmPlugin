@@ -1,1 +1,1 @@
-org.example.mirai.plugin.PluginMain
+net.mamoe.mirai.console.plugins.chat.command.PluginMain

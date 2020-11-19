@@ -6,7 +6,7 @@ plugins {
     id("net.mamoe.mirai-console") version "1.0.0-dev-1"
 }
 
-group = "org.example"
+group = "net.mamoe"
 version = "0.1.0"
 
 repositories {
@@ -14,4 +14,9 @@ repositories {
     mavenCentral()
     jcenter()
     maven("https://dl.bintray.com/kotlin/kotlin-eap")
+}
+
+
+kotlin.target.compilations.all {
+    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
 }
