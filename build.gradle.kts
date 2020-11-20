@@ -20,3 +20,20 @@ repositories {
 kotlin.target.compilations.all {
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
 }
+
+
+tasks.create("buildCiJar", Jar::class) {
+    dependsOn("buildPlugin")
+    doLast {
+        val buildPluginTask = tasks.getByName("buildPlugin", Jar::class)
+        val buildPluginFile = buildPluginTask.archiveFile.get().asFile
+        project.buildDir.subpath("ci").also {
+            it.mkdirs()
+        }.subpath("chat-command.jar").let {
+            buildPluginFile.copyTo(it, true)
+        }
+    }
+}
+
+@Suppress("SpellCheckingInspection")
+fun File.subpath(path: String): File = File(this, path)
