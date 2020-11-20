@@ -27,6 +27,7 @@ import net.mamoe.mirai.message.MessageEvent
 object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "net.mamoe.mirai.console.chat-command",
+        name = "Chat Command",
         version = "0.1.0"
     )
 ) {
