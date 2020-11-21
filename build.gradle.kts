@@ -27,13 +27,10 @@ tasks.create("buildCiJar", Jar::class) {
     doLast {
         val buildPluginTask = tasks.getByName("buildPlugin", Jar::class)
         val buildPluginFile = buildPluginTask.archiveFile.get().asFile
-        project.buildDir.subpath("ci").also {
+        project.buildDir.resolve("ci").also {
             it.mkdirs()
-        }.subpath("chat-command.jar").let {
+        }.resolve("chat-command.jar").let {
             buildPluginFile.copyTo(it, true)
         }
     }
 }
-
-@Suppress("SpellCheckingInspection")
-fun File.subpath(path: String): File = File(this, path)
