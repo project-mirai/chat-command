@@ -10,11 +10,13 @@
 package net.mamoe.mirai.console.plugins.chat.command
 
 import kotlinx.coroutines.CoroutineExceptionHandler
+import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.command.Command
 import net.mamoe.mirai.console.command.CommandExecuteResult
 import net.mamoe.mirai.console.command.CommandManager
 import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
+import net.mamoe.mirai.console.plugin.jvm.JvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.plugins.chat.command.ChatCommandConfig.enabled
@@ -70,7 +72,15 @@ object PluginMain : KotlinPlugin(
                     //  intercept()
                 }
                 is CommandExecuteResult.ExecutionFailed -> {
-                    sender.catchExecutionException(result.exception)
+                    val owner = result.command.owner
+                    val (logger, printOwner) = when (owner) {
+                        is JvmPlugin -> owner.logger to false
+                        else -> MiraiConsole.mainLogger to true
+                    }
+                    logger.warning(
+                        "Exception in executing command `$message`" + if (printOwner) ", command owned by $owner" else "",
+                        result.exception
+                    )
                     // intercept()
                 }
                 is CommandExecuteResult.Intercepted -> {
