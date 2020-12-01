@@ -22,6 +22,8 @@ repositories {
     jcenter()
 }
 
+kotlin.sourceSets.forEach { it.languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn") }
+
 tasks.create("buildCiJar", Jar::class) {
     dependsOn("buildPlugin")
     doLast {
