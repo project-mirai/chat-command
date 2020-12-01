@@ -1,26 +1,26 @@
 plugins {
-    val kotlinVersion = "1.4.10"
+    val kotlinVersion = "1.4.20"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
 
-    id("net.mamoe.mirai-console") version "1.0.0-dev-2"
+    id("net.mamoe.mirai-console") version "1.1.0"
 }
 
 group = "net.mamoe"
 version = "0.1.1"
 
+mirai {
+    publishing {
+        repo = "mirai"
+        packageName = "chat-command"
+        override = true
+    }
+}
+
 repositories {
     mavenLocal()
-    mavenCentral()
     jcenter()
-    maven("https://dl.bintray.com/kotlin/kotlin-eap")
 }
-
-
-kotlin.target.compilations.all {
-    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
-}
-
 
 tasks.create("buildCiJar", Jar::class) {
     dependsOn("buildPlugin")
