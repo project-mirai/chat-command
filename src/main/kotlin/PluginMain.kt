@@ -22,15 +22,15 @@ import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.plugins.chat.command.ChatCommandConfig.enabled
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.Listener
+import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.event.subscribeAlways
-import net.mamoe.mirai.message.MessageEvent
 
 
 object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "net.mamoe.mirai.console.chat-command",
         name = "Chat Command",
-        version = "0.1.0"
+        version = "0.2.0"
     )
 ) {
     @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
