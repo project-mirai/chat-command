@@ -23,78 +23,75 @@ import net.mamoe.mirai.console.plugins.chat.command.ChatCommandConfig.enabled
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.Listener
 import net.mamoe.mirai.event.events.MessageEvent
-import net.mamoe.mirai.event.subscribeAlways
+import net.mamoe.mirai.event.globalEventChannel
 
 
 object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "net.mamoe.mirai.console.chat-command",
         name = "Chat Command",
-        version = "0.2.0"
+        version = "0.3.0"
     )
 ) {
     @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override fun onEnable() {
         ChatCommandConfig.reload()
-        commandListener = subscribeAlways(
-            coroutineContext = CoroutineExceptionHandler { _, throwable ->
+        commandListener =
+            globalEventChannel().subscribeAlways(MessageEvent::class, CoroutineExceptionHandler { _, throwable ->
                 logger.error(throwable)
-            },
-            concurrency = Listener.ConcurrencyKind.CONCURRENT,
-            priority = Listener.EventPriority.NORMAL
-        ) call@{
-            if (!enabled) return@call
+            }) call@{
+                if (!enabled) return@call
 
-            val sender = this.toCommandSender()
+                val sender = this.toCommandSender()
 
-            fun isDebugging(command: Command?): Boolean {
-                /*
-                if (command?.prefixOptional == false || message.content.startsWith(CommandManager.commandPrefix)) {
-                    if (MiraiConsoleImplementationBridge.loggerController.shouldLog("console.debug", SimpleLogger.LogPriority.DEBUG)) {
-                        return true
+                fun isDebugging(command: Command?): Boolean {
+                    /*
+                    if (command?.prefixOptional == false || message.content.startsWith(CommandManager.commandPrefix)) {
+                        if (MiraiConsoleImplementationBridge.loggerController.shouldLog("console.debug", SimpleLogger.LogPriority.DEBUG)) {
+                            return true
+                        }
+                    }*/
+                    return false
+                }
+
+                when (val result = CommandManager.executeCommand(sender, message)) {
+                    is CommandExecuteResult.PermissionDenied -> {
+                        if (isDebugging(result.command)) {
+                            sender.sendMessage("权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.")
+                            // intercept()
+                        }
                     }
-                }*/
-                return false
-            }
-
-            when (val result = CommandManager.executeCommand(sender, message)) {
-                is CommandExecuteResult.PermissionDenied -> {
-                    if (isDebugging(result.command)) {
-                        sender.sendMessage("权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.")
+                    is CommandExecuteResult.IllegalArgument -> {
+                        result.exception.message?.let { sender.sendMessage(it) }
                         // intercept()
                     }
-                }
-                is CommandExecuteResult.IllegalArgument -> {
-                    result.exception.message?.let { sender.sendMessage(it) }
-                    // intercept()
-                }
-                is CommandExecuteResult.Success -> {
-                    //  intercept()
-                }
-                is CommandExecuteResult.ExecutionFailed -> {
-                    val owner = result.command.owner
-                    val (logger, printOwner) = when (owner) {
-                        is JvmPlugin -> owner.logger to false
-                        else -> MiraiConsole.mainLogger to true
+                    is CommandExecuteResult.Success -> {
+                        //  intercept()
                     }
-                    logger.warning(
-                        "Exception in executing command `$message`" + if (printOwner) ", command owned by $owner" else "",
-                        result.exception
-                    )
-                    // intercept()
-                }
-                is CommandExecuteResult.Intercepted -> {
-                    if (isDebugging(result.command)) {
-                        sender.sendMessage("指令执行被拦截, 原因: ${result.reason}")
+                    is CommandExecuteResult.ExecutionFailed -> {
+                        val owner = result.command.owner
+                        val (logger, printOwner) = when (owner) {
+                            is JvmPlugin -> owner.logger to false
+                            else -> MiraiConsole.mainLogger to true
+                        }
+                        logger.warning(
+                            "Exception in executing command `$message`" + if (printOwner) ", command owned by $owner" else "",
+                            result.exception
+                        )
+                        // intercept()
                     }
-                }
-                is CommandExecuteResult.UnmatchedSignature,
-                is CommandExecuteResult.UnresolvedCommand,
-                -> {
-                    // noop
+                    is CommandExecuteResult.Intercepted -> {
+                        if (isDebugging(result.command)) {
+                            sender.sendMessage("指令执行被拦截, 原因: ${result.reason}")
+                        }
+                    }
+                    is CommandExecuteResult.UnmatchedSignature,
+                    is CommandExecuteResult.UnresolvedCommand,
+                    -> {
+                        // noop
+                    }
                 }
             }
-        }
     }
 
     internal lateinit var commandListener: Listener<MessageEvent>
