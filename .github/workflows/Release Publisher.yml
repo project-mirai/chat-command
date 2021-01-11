@@ -28,3 +28,8 @@ jobs:
           asset_path: ./build/ci/chat-command.jar
           asset_name: chat-command-${{ github.event.release.tag_name }}.jar
           asset_content_type: application/jar
+      - name: Gradle publishPlugin
+        run: >
+          ./gradlew publishPlugin --info
+          -Dbintray_user=${{ secrets.BINTRAY_USER }} -Pbintray_user=${{ secrets.BINTRAY_USER }}
+          -Dbintray_key=${{ secrets.BINTRAY_KEY }} -Pbintray_key=${{ secrets.BINTRAY_KEY }}
