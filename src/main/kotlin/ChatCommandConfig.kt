@@ -17,6 +17,9 @@ object ChatCommandConfig : AutoSavePluginConfig("ChatCommand") {
     @ValueDescription("插件是否启用. 设置 false 时禁用插件.")
     val enabled: Boolean by value(true)
 
+    @ValueDescription("是否在参数不匹配时输出帮助.")
+    val replyUnresolvedCommandHelp by value(true)
+
     /*
     @ValueDescription("特定情况时的响应配置")
     val events: Events by value()
