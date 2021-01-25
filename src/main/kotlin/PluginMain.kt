@@ -34,6 +34,7 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.console.util.ConsoleInternalApi
 import net.mamoe.mirai.console.util.cast
 import net.mamoe.mirai.console.util.safeCast
+import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.Listener
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.event.globalEventChannel
@@ -52,18 +53,22 @@ object PluginMain : KotlinPlugin(
     @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override fun onEnable() {
         ChatCommandConfig.reload()
-        commandListener =
-            globalEventChannel().subscribeAlways(MessageEvent::class, CoroutineExceptionHandler { _, throwable ->
+        commandListener = globalEventChannel().subscribeAlways(
+            MessageEvent::class,
+            CoroutineExceptionHandler { _, throwable ->
                 logger.error(throwable)
-            }) call@{
-                if (!enabled) return@call
+            },
+            priority = EventPriority.MONITOR,
+        ) call@{
+            if (!enabled) return@call
+            val sender = kotlin.runCatching {
+                this.toCommandSender()
+            }.getOrNull() ?: return@call
 
-                val sender = kotlin.runCatching {
-                    this.toCommandSender()
-                }.getOrNull() ?: return@call
-
+            PluginMain.launch { // Async
                 handleCommand(sender, message)
             }
+        }
     }
 
     suspend fun handleCommand(sender: CommandSender, message: MessageChain) {
