@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "net.mamoe"
-version = "0.5.0"
+version = "0.5.1"
 
 mirai {
     publishing {
