@@ -47,10 +47,9 @@ object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "net.mamoe.mirai.console.chat-command",
         name = "Chat Command",
-        version = "0.5.0"
+        version = "0.5.2"
     )
 ) {
-    @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override fun onEnable() {
         ChatCommandConfig.reload()
         commandListener = globalEventChannel().subscribeAlways(
@@ -72,69 +71,68 @@ object PluginMain : KotlinPlugin(
     }
 
     suspend fun handleCommand(sender: CommandSender, message: MessageChain) {
+        suspend fun CommandExecuteResult.reminded(tip: String, reply: Boolean) {
+            val owner = command?.owner
+            val (logger, printOwner) = when (owner) {
+                is JvmPlugin -> owner.logger to false
+                else -> MiraiConsole.mainLogger to true
+            }
+            val msg = tip + if (printOwner) ", command owned by $owner" else ""
 
-        fun isDebugging(command: Command?): Boolean {
-            /*
-            if (command?.prefixOptional == false || message.content.startsWith(CommandManager.commandPrefix)) {
-                if (MiraiConsoleImplementationBridge.loggerController.shouldLog("console.debug", SimpleLogger.LogPriority.DEBUG)) {
-                    return true
-                }
-            }*/
-            return false
+            if (reply) {
+                sender.sendMessage(msg)
+            } else {
+                logger.warning(msg, exception)
+            }
         }
 
         when (val result = CommandManager.executeCommand(sender, message)) {
             is PermissionDenied -> {
-                if (isDebugging(result.command)) {
-                    sender.sendMessage("权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.")
-                    // intercept()
-                }
+                result.reminded(
+                    tip = "权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.",
+                    reply = ChatCommandConfig.replyPermissionDeniedHelp
+                )
             }
             is IllegalArgument -> {
                 result.exception.message?.let { sender.sendMessage(it) }
-                // intercept()
             }
             is Success -> {
                 //  intercept()
             }
             is ExecutionFailed -> {
-                val owner = result.command.owner
-                val (logger, printOwner) = when (owner) {
-                    is JvmPlugin -> owner.logger to false
-                    else -> MiraiConsole.mainLogger to true
-                }
-                logger.warning(
-                    "Exception in executing command `$message`" + if (printOwner) ", command owned by $owner" else "",
-                    result.exception
+                result.reminded(
+                    tip = "Exception in executing command `$message`",
+                    reply = ChatCommandConfig.replyExecutionFailedHelp
                 )
-                // intercept()
             }
             is Intercepted -> {
-                if (isDebugging(result.command)) {
-                    sender.sendMessage("指令执行被拦截, 原因: ${result.reason}")
+                result.reminded(
+                    tip = "指令执行被拦截, 原因: ${result.reason}",
+                    reply = ChatCommandConfig.replyInterceptedHelp
+                )
+            }
+            is UnmatchedSignature -> {
+                if (sender.hasPermission(result.command.permission)) {
+                    result.reminded(
+                        tip = "参数不匹配, 你是否想执行: \n" + result.failureReasons.render(result.command, result.call),
+                        reply = ChatCommandConfig.replyUnresolvedCommandHelp
+                    )
+                } else {
+                    result.reminded(
+                        tip = "权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.",
+                        reply = ChatCommandConfig.replyPermissionDeniedHelp
+                    )
                 }
             }
-            is UnmatchedSignature,
-            -> {
-                if ((ChatCommandConfig.replyUnresolvedCommandHelp && sender.hasPermission(result.command.permission))
-                    || isDebugging(result.command)
-                ) {
-                    sender.sendMessage("参数不匹配, 你是否想执行: \n" + result.failureReasons.render(result.command, result.call))
-                }
-            }
-            is UnresolvedCommand,
-            -> {
+            is UnresolvedCommand -> {
                 // noop
             }
         }
-
     }
 
     internal lateinit var commandListener: Listener<MessageEvent>
 }
 
-
-@OptIn(ExperimentalCommandDescriptors::class)
 private fun List<UnmatchedCommandSignature>.render(command: Command, call: CommandCall): String {
     val list =
         this.filter lambda@{ signature ->
@@ -154,7 +152,6 @@ private fun List<CommandValueParameter<*>>.anyStringConstantUnmatched(arguments:
     }
 }
 
-@OptIn(ExperimentalCommandDescriptors::class)
 internal fun UnmatchedCommandSignature.render(command: Command): String {
     @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     val usage =
@@ -162,7 +159,6 @@ internal fun UnmatchedCommandSignature.render(command: Command): String {
     return usage.trim() + "    (${failureReason.render()})"
 }
 
-@OptIn(ExperimentalCommandDescriptors::class)
 internal fun FailureReason.render(): String {
     return when (this) {
         is FailureReason.InapplicableArgument -> "参数类型错误"
@@ -177,7 +173,6 @@ internal fun FailureReason.render(): String {
     }
 }
 
-@OptIn(ExperimentalCommandDescriptors::class)
 internal fun CommandReceiverParameter<*>.renderAsName(): String {
     val classifier = this.type.classifier.cast<KClass<out CommandSender>>()
     return when {

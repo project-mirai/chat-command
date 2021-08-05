@@ -17,3 +17,12 @@
 1. 运行 [Mirai Console](https://github.com/mamoe/mirai-console) 生成plugins文件夹
 1. 从 [Releases](https://github.com/project-mirai/chat-command/releases) 下载`jar`并将其放入`plugins`文件夹中
 
+## 可选配置 
+
+### 文件 `ChatCommand.yml`
+
+* `enabled` 插件是否启用. 设置 false 时禁用插件.
+* `replyUnresolvedCommandHelp` 是否在参数不匹配时输出帮助. 默认 true
+* `replyPermissionDeniedHelp` 是否在权限不足时输出帮助. 默认 false
+* `replyInterceptedHelp` 是否在指令被拦截时输出帮助. 默认 false
+* `replyExecutionFailedHelp` 是否在指令解析失败时输出帮助. 默认 false

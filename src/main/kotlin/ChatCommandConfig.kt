@@ -20,16 +20,12 @@ object ChatCommandConfig : AutoSavePluginConfig("ChatCommand") {
     @ValueDescription("是否在参数不匹配时输出帮助.")
     val replyUnresolvedCommandHelp by value(true)
 
-    /*
-    @ValueDescription("特定情况时的响应配置")
-    val events: Events by value()
+    @ValueDescription("是否在权限不足时输出帮助.")
+    val replyPermissionDeniedHelp by value(false)
 
-    @Serializable
-    data class Events(
-        val onPermissionDenied: OnPermissionDenied,
-    ) {
-        @Serializable
-        data class OnPermissionDenied(
-        )
-    }*/
+    @ValueDescription("是否在指令被拦截时输出帮助.")
+    val replyInterceptedHelp by value(false)
+
+    @ValueDescription("是否在指令解析失败时输出帮助.")
+    val replyExecutionFailedHelp by value(false)
 }
