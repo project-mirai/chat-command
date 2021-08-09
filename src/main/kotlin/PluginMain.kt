@@ -71,18 +71,28 @@ object PluginMain : KotlinPlugin(
     }
 
     suspend fun handleCommand(sender: CommandSender, message: MessageChain) {
-        suspend fun CommandExecuteResult.reminded(tip: String, reply: Boolean) {
+        suspend fun CommandExecuteResult.reminded(tip: String, reply: ReplyHelp) {
             val owner = command?.owner
             val (logger, printOwner) = when (owner) {
                 is JvmPlugin -> owner.logger to false
                 else -> MiraiConsole.mainLogger to true
             }
-            val msg = tip + if (printOwner) ", command owned by $owner" else ""
+            val msg = tip + if (printOwner) ", command owned by $owner" else " "
 
-            if (reply) {
-                sender.sendMessage(msg)
-            } else {
-                logger.warning(msg, exception)
+            when (reply) {
+                ReplyHelp.CONSOLE -> {
+                    logger.warning(msg + "with ${sender.user}", exception)
+                }
+                ReplyHelp.USER -> {
+                    sender.sendMessage(msg + exception?.toString().orEmpty())
+                }
+                ReplyHelp.ALL -> {
+                    logger.warning(msg + "with ${sender.user}", exception)
+                    sender.sendMessage(msg + exception?.toString().orEmpty())
+                }
+                ReplyHelp.NONE -> {
+                    // none
+                }
             }
         }
 
@@ -94,7 +104,10 @@ object PluginMain : KotlinPlugin(
                 )
             }
             is IllegalArgument -> {
-                result.exception.message?.let { sender.sendMessage(it) }
+                result.reminded(
+                    tip = "非法参数",
+                    reply = ChatCommandConfig.replyIllegalArgumentHelp
+                )
             }
             is Success -> {
                 //  intercept()
@@ -132,6 +145,8 @@ object PluginMain : KotlinPlugin(
 
     internal lateinit var commandListener: Listener<MessageEvent>
 }
+
+enum class ReplyHelp { NONE, USER, CONSOLE, ALL }
 
 private fun List<UnmatchedCommandSignature>.render(command: Command, call: CommandCall): String {
     val list =

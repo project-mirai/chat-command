@@ -9,23 +9,29 @@
 
 package net.mamoe.mirai.console.plugins.chat.command
 
-import net.mamoe.mirai.console.data.AutoSavePluginConfig
-import net.mamoe.mirai.console.data.ValueDescription
-import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.console.data.*
 
 object ChatCommandConfig : AutoSavePluginConfig("ChatCommand") {
     @ValueDescription("插件是否启用. 设置 false 时禁用插件.")
     val enabled: Boolean by value(true)
 
-    @ValueDescription("是否在参数不匹配时输出帮助.")
-    val replyUnresolvedCommandHelp by value(true)
+    @ValueName("reply_unresolved_command_help")
+    @ValueDescription("参数不匹配时输出帮助对象.")
+    val replyUnresolvedCommandHelp by value(ReplyHelp.USER)
 
-    @ValueDescription("是否在权限不足时输出帮助.")
-    val replyPermissionDeniedHelp by value(false)
+    @ValueName("reply_illegal_argument_help")
+    @ValueDescription("参数不匹配时输出帮助对象.")
+    val replyIllegalArgumentHelp by value(ReplyHelp.USER)
 
-    @ValueDescription("是否在指令被拦截时输出帮助.")
-    val replyInterceptedHelp by value(false)
+    @ValueName("reply_permission_denied_help")
+    @ValueDescription("权限不足时输出帮助对象.")
+    val replyPermissionDeniedHelp by value(ReplyHelp.CONSOLE)
 
-    @ValueDescription("是否在指令解析失败时输出帮助.")
-    val replyExecutionFailedHelp by value(false)
+    @ValueName("reply_intercepted_help")
+    @ValueDescription("指令被拦截时输出帮助对象.")
+    val replyInterceptedHelp by value(ReplyHelp.CONSOLE)
+
+    @ValueName("reply_execution_failed_help")
+    @ValueDescription("指令解析失败时输出帮助对象.")
+    val replyExecutionFailedHelp by value(ReplyHelp.CONSOLE)
 }
