@@ -1,5 +1,5 @@
 plugins {
-    val kotlinVersion = "1.4.21"
+    val kotlinVersion = "1.6.10"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
 
@@ -19,10 +19,10 @@ mirai {
 
 repositories {
     mavenLocal()
-    jcenter()
+    maven("https://maven.aliyun.com/repository/public") // 阿里云国内代理仓库
 }
 
-kotlin.sourceSets.forEach { it.languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn") }
+kotlin.sourceSets.forEach { it.languageSettings.optIn("kotlin.RequiresOptIn") }
 
 tasks.create("buildCiJar", Jar::class) {
     dependsOn("buildPlugin")
