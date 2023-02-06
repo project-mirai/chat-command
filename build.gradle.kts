@@ -1,9 +1,8 @@
 plugins {
-    val kotlinVersion = "1.5.21"
-    kotlin("jvm") version kotlinVersion
-    kotlin("plugin.serialization") version kotlinVersion
+    kotlin("jvm") version "1.7.10"
+    kotlin("plugin.serialization") version "1.7.10"
 
-    id("net.mamoe.mirai-console") version "2.6.7"
+    id("net.mamoe.mirai-console") version "2.13.4"
 }
 
 group = "net.mamoe"
@@ -20,10 +19,12 @@ mirai {
 repositories {
     mavenLocal()
     mavenCentral()
-    jcenter()
 }
 
-kotlin.sourceSets.forEach { it.languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn") }
+kotlin {
+    explicitApi()
+    sourceSets.forEach { it.languageSettings.optIn("kotlin.RequiresOptIn") }
+}
 
 tasks.create("buildCiJar", Jar::class) {
     dependsOn("buildPlugin")
