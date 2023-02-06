@@ -45,7 +45,7 @@ internal object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "net.mamoe.mirai.console.chat-command",
         name = "Chat Command",
-        version = "0.5.0"
+        version = "0.6.0"
     )
 ) {
     override fun onEnable() {
@@ -82,7 +82,7 @@ internal object PluginMain : KotlinPlugin(
                     logger.warning(msg + "with ${sender.user}", exception)
                 }
                 ReplyHelp.USER -> {
-                    logger.verbose(msg + "with ${sender.user}", exception)
+                    logger.debug(msg + "with ${sender.user}", exception)
                     sender.sendMessage(msg + '\n' + exception?.toString().orEmpty())
                 }
                 ReplyHelp.ALL -> {
@@ -90,7 +90,7 @@ internal object PluginMain : KotlinPlugin(
                     sender.sendMessage(msg + '\n' + exception?.toString().orEmpty())
                 }
                 ReplyHelp.NONE -> {
-                    logger.verbose(msg + "with ${sender.user}", exception)
+                    logger.debug(msg + "with ${sender.user}", exception)
                 }
             }
         }
