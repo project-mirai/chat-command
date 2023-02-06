@@ -16,35 +16,35 @@ public object ChatCommandConfig : AutoSavePluginConfig("ChatCommand") {
     public val enabled: Boolean by value(true)
 
     /**
-     * @since 0.52
+     * @since 0.6
      */
     @ValueName("reply_unresolved_command_help")
     @ValueDescription("参数不匹配时输出帮助对象.")
     public val replyUnresolvedCommandHelp: ReplyHelp by value(ReplyHelp.USER)
 
     /**
-     * @since 0.52
+     * @since 0.6
      */
     @ValueName("reply_illegal_argument_help")
     @ValueDescription("非法参数时输出帮助对象.")
     public val replyIllegalArgumentHelp: ReplyHelp by value(ReplyHelp.USER)
 
     /**
-     * @since 0.52
+     * @since 0.6
      */
     @ValueName("reply_permission_denied_help")
     @ValueDescription("权限不足时输出帮助对象.")
     public val replyPermissionDeniedHelp: ReplyHelp by value(ReplyHelp.CONSOLE)
 
     /**
-     * @since 0.52
+     * @since 0.6
      */
     @ValueName("reply_intercepted_help")
     @ValueDescription("指令被拦截时输出帮助对象.")
     public val replyInterceptedHelp: ReplyHelp by value(ReplyHelp.CONSOLE)
 
     /**
-     * @since 0.52
+     * @since 0.6
      */
     @ValueName("reply_execution_failed_help")
     @ValueDescription("指令解析失败时输出帮助对象.")
