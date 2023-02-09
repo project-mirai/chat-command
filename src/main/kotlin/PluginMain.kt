@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Mamoe Technologies and contributors.
+ * Copyright 2019-2023 Mamoe Technologies and contributors.
  *
  * 此源代码的使用受 GNU AFFERO GENERAL PUBLIC LICENSE version 3 许可证的约束, 可以在以下链接找到该许可证.
  * Use of this source code is governed by the GNU AFFERO GENERAL PUBLIC LICENSE version 3 license that can be found through the following link.
@@ -8,7 +8,6 @@
  */
 @file:OptIn(
     ConsoleExperimentalApi::class,
-    ConsoleInternalApi::class,
     ExperimentalCommandDescriptors::class
 )
 
@@ -31,7 +30,6 @@ import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.plugins.chat.command.ChatCommandConfig.enabled
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.console.util.ConsoleInternalApi
 import net.mamoe.mirai.console.util.cast
 import net.mamoe.mirai.console.util.safeCast
 import net.mamoe.mirai.event.EventPriority
@@ -43,14 +41,13 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
 
-object PluginMain : KotlinPlugin(
+internal object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "net.mamoe.mirai.console.chat-command",
         name = "Chat Command",
-        version = "0.5.0"
+        version = "0.6.0"
     )
 ) {
-    @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override fun onEnable() {
         ChatCommandConfig.reload()
         commandListener = globalEventChannel().subscribeAlways(
@@ -72,69 +69,85 @@ object PluginMain : KotlinPlugin(
     }
 
     suspend fun handleCommand(sender: CommandSender, message: MessageChain) {
+        suspend fun CommandExecuteResult.reminded(tip: String, reply: ReplyHelp) {
+            val owner = command?.owner
+            val (logger, printOwner) = when (owner) {
+                is JvmPlugin -> owner.logger to true
+                else -> MiraiConsole.mainLogger to false
+            }
+            val msg = tip + if (printOwner) ", command owned by $owner" else " "
 
-        fun isDebugging(command: Command?): Boolean {
-            /*
-            if (command?.prefixOptional == false || message.content.startsWith(CommandManager.commandPrefix)) {
-                if (MiraiConsoleImplementationBridge.loggerController.shouldLog("console.debug", SimpleLogger.LogPriority.DEBUG)) {
-                    return true
+            when (reply) {
+                ReplyHelp.CONSOLE -> {
+                    logger.warning(msg + "with ${sender.user}", exception)
                 }
-            }*/
-            return false
+                ReplyHelp.USER -> {
+                    logger.debug(msg + "with ${sender.user}", exception)
+                    sender.sendMessage(msg + '\n' + exception?.toString().orEmpty())
+                }
+                ReplyHelp.ALL -> {
+                    logger.warning(msg + "with ${sender.user}", exception)
+                    sender.sendMessage(msg + '\n' + exception?.toString().orEmpty())
+                }
+                ReplyHelp.NONE -> {
+                    logger.debug(msg + "with ${sender.user}", exception)
+                }
+            }
         }
 
         when (val result = CommandManager.executeCommand(sender, message)) {
             is PermissionDenied -> {
-                if (isDebugging(result.command)) {
-                    sender.sendMessage("权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.")
-                    // intercept()
-                }
+                result.reminded(
+                    tip = "权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.",
+                    reply = ChatCommandConfig.replyPermissionDeniedHelp
+                )
             }
             is IllegalArgument -> {
-                result.exception.message?.let { sender.sendMessage(it) }
-                // intercept()
+                result.reminded(
+                    tip = "非法参数",
+                    reply = ChatCommandConfig.replyIllegalArgumentHelp
+                )
             }
             is Success -> {
                 //  intercept()
             }
             is ExecutionFailed -> {
-                val owner = result.command.owner
-                val (logger, printOwner) = when (owner) {
-                    is JvmPlugin -> owner.logger to false
-                    else -> MiraiConsole.mainLogger to true
-                }
-                logger.warning(
-                    "Exception in executing command `$message`" + if (printOwner) ", command owned by $owner" else "",
-                    result.exception
+                result.reminded(
+                    tip = "Exception in executing command `$message`",
+                    reply = ChatCommandConfig.replyExecutionFailedHelp
                 )
-                // intercept()
             }
             is Intercepted -> {
-                if (isDebugging(result.command)) {
-                    sender.sendMessage("指令执行被拦截, 原因: ${result.reason}")
+                result.reminded(
+                    tip = "指令执行被拦截, 原因: ${result.reason}",
+                    reply = ChatCommandConfig.replyInterceptedHelp
+                )
+            }
+            is UnmatchedSignature -> {
+                if (sender.hasPermission(result.command.permission)) {
+                    result.reminded(
+                        tip = "参数不匹配, 你是否想执行: \n" + result.failureReasons.render(result.command, result.call),
+                        reply = ChatCommandConfig.replyUnresolvedCommandHelp
+                    )
+                } else {
+                    result.reminded(
+                        tip = "权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.",
+                        reply = ChatCommandConfig.replyPermissionDeniedHelp
+                    )
                 }
             }
-            is UnmatchedSignature,
-            -> {
-                if ((ChatCommandConfig.replyUnresolvedCommandHelp && sender.hasPermission(result.command.permission))
-                    || isDebugging(result.command)
-                ) {
-                    sender.sendMessage("参数不匹配, 你是否想执行: \n" + result.failureReasons.render(result.command, result.call))
-                }
-            }
-            is UnresolvedCommand,
-            -> {
+            is UnresolvedCommand -> {
                 // noop
             }
+            else -> {}
         }
-
     }
 
     internal lateinit var commandListener: Listener<MessageEvent>
 }
 
+public enum class ReplyHelp { NONE, USER, CONSOLE, ALL }
 
-@OptIn(ExperimentalCommandDescriptors::class)
 private fun List<UnmatchedCommandSignature>.render(command: Command, call: CommandCall): String {
     val list =
         this.filter lambda@{ signature ->
@@ -154,7 +167,6 @@ private fun List<CommandValueParameter<*>>.anyStringConstantUnmatched(arguments:
     }
 }
 
-@OptIn(ExperimentalCommandDescriptors::class)
 internal fun UnmatchedCommandSignature.render(command: Command): String {
     @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     val usage =
@@ -162,11 +174,10 @@ internal fun UnmatchedCommandSignature.render(command: Command): String {
     return usage.trim() + "    (${failureReason.render()})"
 }
 
-@OptIn(ExperimentalCommandDescriptors::class)
 internal fun FailureReason.render(): String {
     return when (this) {
-        is FailureReason.InapplicableArgument -> "参数类型错误"
         is FailureReason.InapplicableReceiverArgument -> "需要由 ${this.parameter.renderAsName()} 执行"
+        is FailureReason.InapplicableArgument -> "参数类型错误"
         is FailureReason.TooManyArguments -> "参数过多"
         is FailureReason.NotEnoughArguments -> "参数不足"
         is FailureReason.ResolutionAmbiguity -> "调用歧义"
@@ -177,7 +188,6 @@ internal fun FailureReason.render(): String {
     }
 }
 
-@OptIn(ExperimentalCommandDescriptors::class)
 internal fun CommandReceiverParameter<*>.renderAsName(): String {
     val classifier = this.type.classifier.cast<KClass<out CommandSender>>()
     return when {
