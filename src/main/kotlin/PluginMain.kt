@@ -71,11 +71,11 @@ internal object PluginMain : KotlinPlugin(
     suspend fun handleCommand(sender: CommandSender, message: MessageChain) {
         suspend fun CommandExecuteResult.reminded(tip: String, reply: ReplyHelp) {
             val owner = command?.owner
-            val (logger, printOwner) = when (owner) {
-                is JvmPlugin -> owner.logger to true
-                else -> MiraiConsole.mainLogger to false
+            val (logger, owned) = when (owner) {
+                is JvmPlugin -> owner.logger to ", command owned by ${owner.description.name} v${owner.description.version}"
+                else -> MiraiConsole.mainLogger to " "
             }
-            val msg = tip + if (printOwner) ", command owned by $owner" else " "
+            val msg = tip + owned
 
             when (reply) {
                 ReplyHelp.CONSOLE -> {
