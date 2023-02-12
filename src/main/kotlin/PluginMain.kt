@@ -72,25 +72,25 @@ internal object PluginMain : KotlinPlugin(
         suspend fun CommandExecuteResult.reminded(tip: String, reply: ReplyHelp) {
             val owner = command?.owner
             val (logger, owned) = when (owner) {
-                is JvmPlugin -> owner.logger to ", command owned by ${owner.description.name} v${owner.description.version}"
-                else -> MiraiConsole.mainLogger to ", command owned by buildin"
+                is JvmPlugin -> owner.logger to "\n command owned by ${owner.description.name} v${owner.description.version}"
+                else -> MiraiConsole.mainLogger to "\n command owned by buildin"
             }
             val msg = tip + owned
 
             when (reply) {
                 ReplyHelp.CONSOLE -> {
-                    logger.warning(msg + "with ${sender.user}", exception)
+                    logger.warning(msg + " with ${sender.user}", exception)
                 }
                 ReplyHelp.USER -> {
-                    logger.debug(msg + "with ${sender.user}", exception)
+                    logger.debug(msg + " with ${sender.user}", exception)
                     sender.sendMessage(msg + '\n' + exception?.toString().orEmpty())
                 }
                 ReplyHelp.ALL -> {
-                    logger.warning(msg + "with ${sender.user}", exception)
+                    logger.warning(msg + " with ${sender.user}", exception)
                     sender.sendMessage(msg + '\n' + exception?.toString().orEmpty())
                 }
                 ReplyHelp.NONE -> {
-                    logger.debug(msg + "with ${sender.user}", exception)
+                    logger.debug(msg + " with ${sender.user}", exception)
                 }
             }
         }
@@ -98,7 +98,7 @@ internal object PluginMain : KotlinPlugin(
         when (val result = CommandManager.executeCommand(sender, message)) {
             is PermissionDenied -> {
                 result.reminded(
-                    tip = "权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.",
+                    tip = "权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}",
                     reply = ChatCommandConfig.replyPermissionDeniedHelp
                 )
             }
@@ -131,7 +131,7 @@ internal object PluginMain : KotlinPlugin(
                     )
                 } else {
                     result.reminded(
-                        tip = "权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}.",
+                        tip = "权限不足. ${CommandManager.commandPrefix}${result.command.primaryName} 需要权限 ${result.command.permission.id}",
                         reply = ChatCommandConfig.replyPermissionDeniedHelp
                     )
                 }
