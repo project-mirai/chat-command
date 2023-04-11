@@ -3,18 +3,11 @@ plugins {
     kotlin("plugin.serialization") version "1.7.10"
 
     id("net.mamoe.mirai-console") version "2.13.4"
+    id("me.him188.maven-central-publish") version "1.0.0"
 }
 
 group = "net.mamoe"
 version = "0.6.0"
-
-mirai {
-    publishing {
-        repo = "mirai"
-        packageName = "chat-command"
-        override = true
-    }
-}
 
 repositories {
     mavenLocal()
@@ -36,5 +29,14 @@ tasks.create("buildCiJar", Jar::class) {
         }.resolve("chat-command.jar").let {
             buildPluginFile.copyTo(it, true)
         }
+    }
+}
+
+mavenCentralPublish {
+    githubProject("project-mirai", "chat-command")
+    licenseAGplV3()
+    developer("Mamoe Technologies")
+    publication {
+        artifact(tasks.getByName("buildPlugin"))
     }
 }
