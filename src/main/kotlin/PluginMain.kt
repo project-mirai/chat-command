@@ -73,6 +73,7 @@ internal object PluginMain : KotlinPlugin(
             val owner = command?.owner
             val (logger, owned) = when (owner) {
                 is JvmPlugin -> owner.logger to "\n command owned by ${owner.description.name} v${owner.description.version}"
+                null -> MiraiConsole.mainLogger to "\n unknown command"
                 else -> MiraiConsole.mainLogger to "\n command owned by buildin"
             }
             val msg = tip + owned
